@@ -236,28 +236,13 @@ const map = L.map('map').setView(
 // 2. BẢN ĐỒ NỀN OPENSTREETMAP
 // ======================================================
 
-const voyager = L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     {
-        maxZoom: 20,
         attribution:
-            '&copy; OpenStreetMap contributors &copy; CARTO'
+            '&copy; OpenStreetMap contributors'
     }
-);
-
-const satellite = L.tileLayer(
-    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    {
-        maxZoom: 19,
-        attribution: 'Tiles &copy; Esri'
-    }
-);
-
-satellite.addTo(map);
-L.control.layers({
-    'Bản đồ đường phố': voyager,
-    'Ảnh vệ tinh': satellite
-}).addTo(map);
+).addTo(map);
 
 
 // ======================================================
@@ -561,7 +546,7 @@ fetch('PhuongXaHaTinh.geojson')
 
                 labelClass = 'label-medium';
 
-            } else if (zoom >= 11) {
+            } else if (zoom >= 10) {
 
                 labelClass = 'label-small';
             }
