@@ -253,8 +253,7 @@ const satellite = L.tileLayer(
     }
 );
 
-voyager.addTo(map);
-
+satellite.addTo(map);
 L.control.layers({
     'Bản đồ đường phố': voyager,
     'Ảnh vệ tinh': satellite
