@@ -236,13 +236,28 @@ const map = L.map('map').setView(
 // 2. BẢN ĐỒ NỀN OPENSTREETMAP
 // ======================================================
 
-L.tileLayer(
+const osm = L.tileLayer(
     'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
     {
-        attribution:
-            '&copy; OpenStreetMap contributors'
+        attribution: '&copy; OpenStreetMap contributors',
+        maxZoom: 19
     }
-).addTo(map);
+);
+
+const carto = L.tileLayer(
+    'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+    {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        maxZoom: 20
+    }
+);
+
+osm.addTo(map);
+
+L.control.layers({
+    "OpenStreetMap": osm,
+    "Carto Light": carto
+}).addTo(map);
 
 
 // ======================================================
