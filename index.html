@@ -236,27 +236,28 @@ const map = L.map('map').setView(
 // 2. BẢN ĐỒ NỀN OPENSTREETMAP
 // ======================================================
 
-const osm = L.tileLayer(
-    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+const voyager = L.tileLayer(
+    'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     {
-        attribution: '&copy; OpenStreetMap contributors',
-        maxZoom: 19
+        maxZoom: 20,
+        attribution:
+            '&copy; OpenStreetMap contributors &copy; CARTO'
     }
 );
 
-const carto = L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+const satellite = L.tileLayer(
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
     {
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
-        maxZoom: 20
+        maxZoom: 19,
+        attribution: 'Tiles &copy; Esri'
     }
 );
 
-carto.addTo(map);
+voyager.addTo(map);
 
 L.control.layers({
-    "OpenStreetMap": osm,
-    "Carto Light": carto
+    'Bản đồ đường phố': voyager,
+    'Ảnh vệ tinh': satellite
 }).addTo(map);
 
 
