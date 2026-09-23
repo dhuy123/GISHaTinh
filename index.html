@@ -266,7 +266,9 @@
         // 1. KHỞI TẠO BẢN ĐỒ
         // ======================================================
 
-        const map = L.map('map').setView(
+        const map = L.map('map', {
+            attributionControl: false
+        }).setView(
             [20.49, 106.26],
             14
         );
