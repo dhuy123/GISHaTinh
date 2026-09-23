@@ -236,6 +236,10 @@
 
             margin: 12px;
         }
+
+        .leaflet-control-attribution a[href*="leafletjs.com"] {
+            display: none !important;
+        }
     </style>
 
 </head>
@@ -266,9 +270,7 @@
         // 1. KHỞI TẠO BẢN ĐỒ
         // ======================================================
 
-        const map = L.map('map', {
-            attributionControl: false
-        }).setView(
+        const map = L.map('map').setView(
             [20.49, 106.26],
             14
         );
