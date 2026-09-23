@@ -237,9 +237,9 @@
             margin: 12px;
         }
 
-        .leaflet-control-attribution a[href*="leafletjs.com"] {
+        /* .leaflet-control-attribution a[href*="leafletjs.com"] {
             display: none !important;
-        }
+        } */
     </style>
 
 </head>
@@ -270,7 +270,12 @@
         // 1. KHỞI TẠO BẢN ĐỒ
         // ======================================================
 
-        const map = L.map('map').setView(
+
+        const map = L.map('map', {
+            attributionControl: false,
+            minZoom: 6,
+            maxZoom: 22,
+        }).setView(
             [20.49, 106.26],
             14
         );
@@ -285,6 +290,7 @@
             {
                 subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
                 maxZoom: 22,
+                noWrap: true,
                 attribution:
                     '&copy; Google Maps &middot; Vietflex'
             }
@@ -295,6 +301,7 @@
             {
                 subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
                 maxZoom: 22,
+                noWrap: true,
                 attribution:
                     '&copy; Google Maps &middot; Vietflex'
             }
@@ -305,6 +312,7 @@
             {
                 subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
                 maxZoom: 22,
+                noWrap: true,
                 attribution: '&copy; Google Maps &middot; Vietflex'
             }
         );
