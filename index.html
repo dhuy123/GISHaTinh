@@ -317,11 +317,11 @@
             }
         );
 
-        const defaultLayer = streets.addTo(map);
+        const defaultLayer = hybrid.addTo(map);
         const baseMaps = {
             'Bản đồ đường phố': streets,
-            'Bản đồ vệ tinh': satellite,
             'Bản đồ kết hợp': hybrid,
+            'Bản đồ vệ tinh': satellite,
         };
 
         L.control.layers(
