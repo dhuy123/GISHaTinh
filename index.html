@@ -3,23 +3,10 @@
 
 <head>
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebGIS - Phường xã Hà Tĩnh (MapLibre GL JS)</title>
 
-    <title>WebGIS - Phường xã Hà Tĩnh</title>
-
-
-    <!-- =========================================
-         LEAFLET CSS
-         ========================================= -->
-
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
-
-    <!-- =========================================
-         CSS
-         ========================================= -->
-
+    <link rel="stylesheet" href="./libs/maplibre/maplibre-gl.css">
     <style>
         html,
         body {
@@ -29,762 +16,288 @@
             height: 100%;
         }
 
-
         #map {
             width: 100%;
             height: 100vh;
         }
 
-
-        /* =========================================
-           LABEL TRÊN POLYGON
-           ========================================= */
-
-        .polygon-label {
-
-            background: transparent;
-
-            border: none;
-
-            box-shadow: none;
-
-            color: #1f2937;
-
-            font-size: 13px;
-
-            font-weight: bold;
-
-            white-space: nowrap;
-
-            text-shadow:
-                1px 1px 2px white,
-                -1px -1px 2px white,
-                1px -1px 2px white,
-                -1px 1px 2px white;
-
-            pointer-events: none;
+        .maplibregl-ctrl-group button {
+            width: 30px;
+            height: 30px;
         }
 
-
-        .polygon-label.label-small {
-
-            font-size: 10px;
+        .map-style-control {
+            background: #fff;
+            padding: 8px;
+            border-radius: 5px;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, .35);
+            font: 13px Arial, sans-serif;
+            min-width: 145px;
         }
 
-
-        .polygon-label.label-medium {
-
-            font-size: 13px;
+        .map-style-control strong {
+            display: block;
+            margin: 0 0 6px;
         }
 
-
-        .polygon-label.label-large {
-
-            font-size: 16px;
+        .map-style-control label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 5px 0;
+            cursor: pointer;
         }
-
-
-        .polygon-label.label-hidden {
-
-            display: none;
-        }
-
-
-        /* Bỏ mũi tên của tooltip */
-
-        .leaflet-tooltip.polygon-label::before {
-            display: none;
-        }
-
-
-        /* ======================================
-   POPUP
-====================================== */
 
         .custom-popup {
-            width: 380px;
-            /* max-width: 90vw; */
+            width: 350px;
+            max-width: 72vw;
             font-family: Arial, sans-serif;
         }
 
-        .custom-leaflet-popup .leaflet-popup-close-button {
-            position: absolute;
-            top: 8px;
-            right: 10px;
-
-            width: 28px;
-            height: 28px;
-
-            color: #ffffff;
-            background: rgba(0, 0, 0, 0.18);
-
-            border-radius: 50%;
-
-            font-size: 22px;
-            font-weight: bold;
-            line-height: 26px;
-            text-align: center;
-
-            text-decoration: none;
-
-            z-index: 9999;
-        }
-
-        .custom-leaflet-popup .leaflet-popup-close-button:hover {
-            background: rgba(0, 0, 0, 0.35);
-            color: #ffffff;
-        }
-
-
-        /* ======================================
-   TIÊU ĐỀ
-====================================== */
         .popup-title {
-            position: relative;
-
             background: #198754;
-            color: white;
-
-            font-size: 19px;
+            color: #fff;
+            font-size: 18px;
             font-weight: 700;
-
-            padding: 12px 45px 12px 16px;
-
-            border-radius: 10px 10px 0 0;
+            padding: 12px 38px 12px 14px;
+            border-radius: 8px 8px 0 0;
         }
-
-
-        /* ======================================
-   BODY
-====================================== */
 
         .popup-body {
-            background: #ffffff;
+            background: #fff;
+            max-height: 55vh;
+            overflow-y: auto;
         }
-
-
-        /* ======================================
-   MỖI THUỘC TÍNH
-====================================== */
 
         .attribute {
             display: grid;
-
-            grid-template-columns: 125px 1fr;
-
-            min-height: 38px;
-
-            border-bottom: 1px solid #eeeeee;
-
-            align-items: center;
+            grid-template-columns: 125px minmax(0, 1fr);
+            min-height: 36px;
+            border-bottom: 1px solid #eee;
+            align-items: start;
         }
 
-
-        /* ======================================
-   TÊN FIELD
-====================================== */
-
         .attribute-key {
-            padding: 8px 10px 8px 14px;
-
+            padding: 8px 9px 8px 12px;
             color: #198754;
-
-            font-size: 14px;
-
+            font-size: 13px;
             font-weight: 700;
         }
 
-
-        /* ======================================
-   GIÁ TRỊ
-====================================== */
-
         .attribute-value {
-            padding: 8px 14px 8px 5px;
-
+            padding: 8px 12px 8px 4px;
             color: #444;
-
-            font-size: 14px;
-
+            font-size: 13px;
             line-height: 1.4;
-
-            word-break: break-word;
+            overflow-wrap: anywhere;
         }
 
-
-        /* ======================================
-   DÒNG CUỐI
-====================================== */
-
-        .attribute:last-child {
-            border-bottom: none;
-        }
-
-        /* =========================================
-           LEAFLET POPUP
-           ========================================= */
-
-        .leaflet-popup-content-wrapper {
-
-            border-radius: 8px;
-
+        .maplibregl-popup-content {
             padding: 0;
+            border-radius: 8px;
+            overflow: hidden;
         }
 
-
-        .leaflet-popup-content {
-
-            margin: 12px;
+        .maplibregl-popup-close-button {
+            z-index: 2;
+            color: #fff;
+            background: rgba(0, 0, 0, .18);
+            border-radius: 50%;
+            width: 27px;
+            height: 27px;
+            right: 7px;
+            top: 7px;
+            font-size: 21px;
         }
 
-        /* .leaflet-control-attribution a[href*="leafletjs.com"] {
-            display: none !important;
-        } */
+        .maplibregl-popup-close-button:hover {
+            color: #fff;
+            background: rgba(0, 0, 0, .35);
+        }
+
+        .maplibregl-popup-tip {
+            border-top-color: #fff;
+        }
+
+        /* Popup thông tin xã */
+        .ward-popup {
+            min-width: 240px;
+            max-width: 340px;
+            font-family: Arial, sans-serif;
+        }
+
+        .ward-popup-title {
+            background: #198754;
+            color: white;
+            padding: 12px 40px 12px 14px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .ward-popup-body {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 8px 12px;
+        }
+
+        .ward-popup-row {
+            display: grid;
+            grid-template-columns: 110px minmax(0, 1fr);
+            gap: 8px;
+            padding: 7px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+            overflow-wrap: anywhere;
+        }
+
+        .ward-popup-key {
+            color: #198754;
+            font-weight: bold;
+        }
+
+        .ward-popup-value {
+            color: #333;
+        }
+
+        .maplibregl-popup-content {
+            padding: 0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
     </style>
-
 </head>
 
-
 <body>
-
-    <!-- =========================================
-     MAP
-     ========================================= -->
-
     <div id="map"></div>
 
-
-    <!-- =========================================
-     LEAFLET JS
-     ========================================= -->
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-    </script>
+    <!-- MapLibre GL JS dạng ES module. Đường dẫn này cần tồn tại trong thư mục libs/maplibre. -->
+    <script type="module">
+        import * as maplibregl from './libs/maplibre/maplibre-gl.mjs';
 
 
-    <script>
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: 'https://lifegis-api.lifetex.vn/style.json',
+            center: [105.9, 18.3],
+            zoom: 9,
+            attributionControl: false
+        });
 
-
-        // ======================================================
-        // 1. KHỞI TẠO BẢN ĐỒ
-        // ======================================================
-
-
-        const map = L.map('map', {
-            attributionControl: false,
-            minZoom: 6,
-            maxZoom: 22,
-        }).setView(
-            [20.49, 106.26],
-            14
+        map.addControl(
+            new maplibregl.NavigationControl({ visualizePitch: true }),
+            'top-right'
         );
 
-
-        // ======================================================
-        // 2. BẢN ĐỒ NỀN VIETFLEX
-        // ======================================================
-
-        const streets = L.tileLayer(
-            'https://{s}.google.com/vt/lyrs=m&hl=vi&gl=VN&x={x}&y={y}&z={z}',
-            {
-                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-                maxZoom: 22,
-                attribution:
-                    '&copy; Google Maps &middot; Vietflex'
-            }
+        map.addControl(
+            new maplibregl.ScaleControl({
+                maxWidth: 120,
+                unit: 'metric'
+            }),
+            'bottom-left'
         );
 
-        const satellite = L.tileLayer(
-            'https://{s}.google.com/vt/lyrs=s&hl=vi&gl=VN&x={x}&y={y}&z={z}',
-            {
-                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-                maxZoom: 22,
-                attribution:
-                    '&copy; Google Maps &middot; Vietflex'
-            }
-        );
+        // Click vào đối tượng trên bản đồ để xem thông tin
 
-        const hybrid = L.tileLayer(
-            'https://{s}.google.com/vt/lyrs=y&hl=vi&gl=VN&x={x}&y={y}&z={z}',
-            {
-                subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-                maxZoom: 22,
-                attribution: '&copy; Google Maps &middot; Vietflex'
-            }
-        );
+        map.on('click', (e) => {
+            const features = map.queryRenderedFeatures(e.point);
 
-        const defaultLayer = hybrid.addTo(map);
-        const baseMaps = {
-            'Bản đồ đường phố': streets,
-            'Bản đồ kết hợp': hybrid,
-            'Bản đồ vệ tinh': satellite,
-        };
+            // Chỉ lấy polygon thuộc tỉnh Hà Tĩnh
+            const feature = features.find((f) =>
+                ['fill', 'fill-extrusion'].includes(f.layer.type) &&
+                f.properties &&
+                f.properties.tenTinh === 'Tỉnh Hà Tĩnh'
+            );
 
-        L.control.layers(
-            baseMaps,
-            null,
-            {
-                position: 'topright',
-                collapsed: true
-            }
-        ).addTo(map);
+            if (!feature) return;
 
+            const properties = feature.properties;
 
-        // ======================================================
-        // 3. ĐỌC FILE GEOJSON
-        // ======================================================
+            // Ánh xạ tên trường sang tiếng Việt
+            const fieldLabels = {
+                tenTinh: 'Tỉnh',
+                maTinh: 'Mã tỉnh',
+                tenXa: 'Tên xã',
+                maXa: 'Mã xã',
+                danSo: 'Dân số',
+                dienTich: 'Diện tích',
+                ghiChu: 'Ghi chú'
+            };
 
-        fetch('PhuongXaHaTinh.geojson')
+            const title = document.createElement('div');
+            title.className = 'ward-popup-title';
+            title.textContent = properties.tenXa || 'Thông tin xã';
 
-            .then(response => {
+            const body = document.createElement('div');
+            body.className = 'ward-popup-body';
 
-                // Kiểm tra file có tồn tại không
+            // Chỉ hiển thị các trường cần thiết
+            const fields = [
+                'tenTinh',
+                'maTinh',
+                'maXa',
+                'danSo',
+                'dienTich',
+                'ghiChu'
+            ];
 
-                if (!response.ok) {
+            fields.forEach((key) => {
+                const value = properties[key];
 
-                    throw new Error(
-                        'Không tìm thấy file GeoJSON'
-                    );
+                if (value == null || value === '') return;
+
+                const row = document.createElement('div');
+                row.className = 'ward-popup-row';
+
+                const label = document.createElement('div');
+                label.className = 'ward-popup-key';
+                label.textContent = fieldLabels[key] || key;
+
+                const content = document.createElement('div');
+                content.className = 'ward-popup-value';
+
+                // Định dạng dân số và diện tích
+                if (key === 'danSo') {
+                    content.textContent =
+                        Number(value).toLocaleString('vi-VN') + ' người';
+                } else if (key === 'dienTich') {
+                    content.textContent =
+                        Number(value).toLocaleString('vi-VN');
+                } else {
+                    content.textContent = String(value);
                 }
 
-                return response.json();
-
-            })
-
-
-            .then(data => {
-
-
-                // ==================================================
-                // 4. TẠO LAYER GEOJSON
-                // ==================================================
-
-                const layer = L.geoJSON(
-                    data,
-                    {
-
-
-                        // ==========================================
-                        // STYLE BAN ĐẦU
-                        // ==========================================
-
-                        style: function (feature) {
-
-                            return {
-
-                                // Màu viền
-                                color: '#198754',
-
-                                // Độ dày viền
-                                weight: 2,
-
-                                // Màu nền polygon
-                                fillColor: '#7bc8a4',
-
-                                // Độ trong suốt
-                                fillOpacity: 1
-
-                            };
-                        },
-
-
-                        // ==========================================
-                        // XỬ LÝ TỪNG POLYGON
-                        // ==========================================
-
-                        onEachFeature: function (
-                            feature,
-                            layer
-                        ) {
-
-
-                            // ======================================
-                            // LẤY THUỘC TÍNH
-                            // ======================================
-
-                            const properties =
-                                feature.properties || {};
-
-
-                            // ======================================
-                            // TẠO LABEL
-                            // ======================================
-
-                            const label =
-
-                                (properties.loai || '') +
-                                ' ' +
-
-                                (properties.ten_xa || '');
-
-
-                            // ======================================
-                            // HIỂN THỊ LABEL
-                            // ======================================
-
-                            layer.bindTooltip(
-
-                                label,
-
-                                {
-
-                                    // Luôn hiển thị
-                                    permanent: true,
-
-                                    // Nằm giữa polygon
-                                    direction: 'center',
-
-                                    // CSS label
-                                    className:
-                                        'polygon-label',
-
-                                    opacity: 1
-
-                                }
-
-                            );
-
-
-                            // ======================================
-                            // TÊN FIELD HIỂN THỊ TIẾNG VIỆT
-                            // ======================================
-
-                            const fieldLabels = {
-
-                                ma_xa: "Mã xã",
-                                ten_xa: "Tên xã",
-                                sap_nhap: "Sáp nhập",
-                                tru_so: "Trụ sở",
-                                loai: "Loại đơn vị",
-                                dtich_km2: "Diện tích",
-                                dan_so: "Dân số",
-                                matdo_km2: "Mật độ dân số",
-                                ma_tinh: "Mã tỉnh",
-                                ten_tinh: "Tỉnh"
-
-                            };
-
-
-                            // ======================================
-                            // TẠO POPUP
-                            // ======================================
-
-                            const tenXa =
-                                properties.ten_xa ||
-                                "Thông tin đơn vị hành chính";
-
-
-                            let html = `
-
-    <div class="custom-popup">
-
-        <div class="popup-title">
-            ${tenXa}
-        </div>
-
-        <div class="popup-body">
-
-`;
-
-
-                            // ======================================
-                            // DUYỆT CÁC THUỘC TÍNH
-                            // ======================================
-
-                            for (const key in properties) {
-
-                                const value = properties[key];
-
-
-                                // Bỏ qua giá trị rỗng
-                                if (
-                                    value === null ||
-                                    value === undefined ||
-                                    value === ''
-                                ) {
-                                    continue;
-                                }
-
-
-                                // Bỏ qua các trường kỹ thuật
-                                if (
-                                    key === 'id' ||
-                                    key === 'geom' ||
-                                    key === 'geometry' ||
-                                    key === 'objectid'
-                                ) {
-                                    continue;
-                                }
-
-
-                                // Tên tiếng Việt
-                                const fieldName =
-                                    fieldLabels[key] || key;
-
-
-                                // ======================================
-                                // ĐỊNH DẠNG GIÁ TRỊ
-                                // ======================================
-
-                                let displayValue = value;
-
-
-                                // Diện tích
-                                if (key === 'dtich_km2') {
-
-                                    displayValue =
-                                        Number(value).toLocaleString('vi-VN') +
-                                        ' km²';
-
-                                }
-
-
-                                // Dân số
-                                if (key === 'dan_so') {
-
-                                    displayValue =
-                                        Number(value).toLocaleString('vi-VN') +
-                                        ' người';
-
-                                }
-
-
-                                // Mật độ
-                                if (key === 'matdo_km2') {
-
-                                    displayValue =
-                                        Number(value).toLocaleString('vi-VN') +
-                                        ' người/km²';
-
-                                }
-
-
-                                html += `
-
-        <div class="attribute">
-
-            <div class="attribute-key">
-                ${fieldName}
-            </div>
-
-            <div class="attribute-value">
-                ${displayValue}
-            </div>
-
-        </div>
-
-    `;
-
-                            }
-
-
-                            html += `
-
-        </div>
-
-    </div>
-
-`;
-
-
-                            // ======================================
-                            // ĐÓNG POPUP HTML
-                            // ======================================
-
-                            html += `
-
-                            </div>
-
-                        </div>
-
-                    `;
-
-
-                            // ======================================
-                            // GẮN POPUP
-                            // ======================================
-
-                            layer.bindPopup(
-
-                                html,
-
-                                {
-                                    maxWidth: 400,
-                                    className: 'custom-leaflet-popup'
-                                }
-
-                            );
-
-
-                            // =================================================
-                            // 5. LƯU STYLE BAN ĐẦU
-                            // =================================================
-
-                            const originalStyle = {
-
-                                color: '#198754',
-
-                                weight: 2,
-
-                                fillColor: '#7bc8a4',
-
-                                fillOpacity: 1
-
-                            };
-
-
-                            // =================================================
-                            // 6. HIGHLIGHT KHI RÊ CHUỘT VÀO
-                            // =================================================
-
-                            layer.on(
-                                'mouseover',
-                                function () {
-
-
-                                    this.setStyle({
-
-                                        // ĐỔI MÀU VIỀN
-                                        color: '#dc2626',
-
-                                        // VIỀN DÀY HƠN
-                                        weight: 4
-
-                                        // Không thay đổi:
-                                        // fillColor
-                                        // fillOpacity
-
-                                    });
-
-
-                                    // Đưa polygon lên trên
-
-                                    this.bringToFront();
-
-                                }
-                            );
-
-
-                            // =================================================
-                            // 7. KHI RỜI CHUỘT
-                            // =================================================
-
-                            layer.on(
-                                'mouseout',
-                                function () {
-
-
-                                    // Trả lại đúng style ban đầu
-
-                                    this.setStyle(
-                                        originalStyle
-                                    );
-
-                                }
-                            );
-
-                        }
-
-                    }
-
-                ).addTo(map);
-
-
-                // =================================================
-                // 8. ĐIỀU CHỈNH LABEL THEO MỨC ZOOM
-                // =================================================
-
-                function updateLabelVisibility() {
-
-                    const zoom = map.getZoom();
-
-                    let labelClass = 'label-hidden';
-
-                    if (zoom >= 15) {
-
-                        labelClass = 'label-large';
-
-                    } else if (zoom >= 13) {
-
-                        labelClass = 'label-medium';
-
-                    } else if (zoom >= 10) {
-
-                        labelClass = 'label-small';
-                    }
-
-                    layer.eachLayer(function (polygon) {
-
-                        const tooltip = polygon.getTooltip();
-
-                        const element =
-                            tooltip && tooltip.getElement();
-
-                        if (!element) {
-
-                            return;
-                        }
-
-                        element.classList.remove(
-                            'label-hidden',
-                            'label-small',
-                            'label-medium',
-                            'label-large'
-                        );
-
-                        element.classList.add(labelClass);
-                    });
-                }
-
-
-                map.on('zoomend', updateLabelVisibility);
-
-                updateLabelVisibility();
-
-
-                // ==================================================
-                // 9. ZOOM ĐẾN TOÀN BỘ DỮ LIỆU
-                // ==================================================
-
-                const bounds =
-                    layer.getBounds();
-
-
-                if (bounds.isValid()) {
-
-                    map.fitBounds(
-                        bounds,
-                        {
-                            padding: [20, 20]
-                        }
-                    );
-
-                }
-
-
-            })
-
-
-            // ======================================================
-            // 9. XỬ LÝ LỖI
-            // ======================================================
-
-            .catch(error => {
-                console.error(
-                    'Không thể đọc GeoJSON:',
-                    error
-                );
-
-                alert(
-                    'Không thể đọc file PhuongXaHaTinh.geojson'
-                );
-
+                row.append(label, content);
+                body.appendChild(row);
             });
 
+            const container = document.createElement('div');
+            container.className = 'ward-popup';
+            container.append(title, body);
+
+            new maplibregl.Popup({
+                closeButton: true,
+                closeOnClick: true,
+                maxWidth: '360px'
+            })
+                .setLngLat(e.lngLat)
+                .setDOMContent(container)
+                .addTo(map);
+        });
+
+        // Đổi con trỏ khi rê chuột lên xã thuộc Hà Tĩnh
+        map.on('mousemove', (e) => {
+            const features = map.queryRenderedFeatures(e.point);
+
+            const hasHaTinh = features.some((f) =>
+                ['fill', 'fill-extrusion'].includes(f.layer.type) &&
+                f.properties &&
+                f.properties.tenTinh === 'Tỉnh Hà Tĩnh'
+            );
+
+            map.getCanvas().style.cursor = hasHaTinh ? 'pointer' : '';
+        });
 
     </script>
-
-
 </body>
 
 </html>
