@@ -118,52 +118,6 @@
         .maplibregl-popup-tip {
             border-top-color: #fff;
         }
-
-        /* Popup thông tin xã */
-        .ward-popup {
-            min-width: 240px;
-            max-width: 340px;
-            font-family: Arial, sans-serif;
-        }
-
-        .ward-popup-title {
-            background: #198754;
-            color: white;
-            padding: 12px 40px 12px 14px;
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        .ward-popup-body {
-            max-height: 300px;
-            overflow-y: auto;
-            padding: 8px 12px;
-        }
-
-        .ward-popup-row {
-            display: grid;
-            grid-template-columns: 110px minmax(0, 1fr);
-            gap: 8px;
-            padding: 7px 0;
-            border-bottom: 1px solid #eee;
-            font-size: 13px;
-            overflow-wrap: anywhere;
-        }
-
-        .ward-popup-key {
-            color: #198754;
-            font-weight: bold;
-        }
-
-        .ward-popup-value {
-            color: #333;
-        }
-
-        .maplibregl-popup-content {
-            padding: 0;
-            border-radius: 8px;
-            overflow: hidden;
-        }
     </style>
 </head>
 
@@ -174,18 +128,25 @@
     <script type="module">
         import * as maplibregl from './libs/maplibre/maplibre-gl.mjs';
 
+        const GEOJSON_URL = './PhuongXaHaTinh.geojson';
+        const SOURCE_ID = 'phuong-xa';
+        const LABEL_SOURCE_ID = 'phuong-xa-label-source';
+        const FILL_LAYER = 'phuong-xa-fill';
+        const LINE_LAYER = 'phuong-xa-line';
+        // const HOVER_LAYER = 'phuong-xa-hover';
+        const LABEL_LAYER = 'phuong-xa-labels';
 
         const map = new maplibregl.Map({
             container: 'map',
-            style: 'https://lifegis-api.lifetex.vn/style.json',
+            style: 'https://gishn.hanoi.dcs.vn:360/style.json',
             center: [105.9, 18.3],
-            zoom: 9,
+            zoom: 8,
             attributionControl: false
         });
 
         map.addControl(
             new maplibregl.NavigationControl({ visualizePitch: true }),
-            'top-right'
+            'top-left'
         );
 
         map.addControl(
@@ -196,107 +157,295 @@
             'bottom-left'
         );
 
-        // Click vào đối tượng trên bản đồ để xem thông tin
+        const fieldLabels = {
+            ma_xa: 'Mã xã',
+            ten_xa: 'Tên xã',
+            sap_nhap: 'Sáp nhập',
+            tru_so: 'Trụ sở',
+            loai: 'Loại đơn vị',
+            dtich_km2: 'Diện tích',
+            dan_so: 'Dân số',
+            matdo_km2: 'Mật độ dân số',
+            ma_tinh: 'Mã tỉnh',
+            ten_tinh: 'Tỉnh'
+        };
 
-        map.on('click', (e) => {
-            const features = map.queryRenderedFeatures(e.point);
+        function escapeText(value) {
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
 
-            // Chỉ lấy polygon thuộc tỉnh Hà Tĩnh
-            const feature = features.find((f) =>
-                ['fill', 'fill-extrusion'].includes(f.layer.type) &&
-                f.properties &&
-                f.properties.tenTinh === 'Tỉnh Hà Tĩnh'
-            );
+        function formatValue(key, value) {
+            if (key === 'dtich_km2' && Number.isFinite(Number(value))) {
+                return Number(value).toLocaleString('vi-VN') + ' km²';
+            }
+            if (key === 'dan_so' && Number.isFinite(Number(value))) {
+                return Number(value).toLocaleString('vi-VN') + ' người';
+            }
+            if (key === 'matdo_km2' && Number.isFinite(Number(value))) {
+                return Number(value).toLocaleString('vi-VN') + ' người/km²';
+            }
+            return String(value);
+        }
 
-            if (!feature) return;
-
-            const properties = feature.properties;
-
-            // Ánh xạ tên trường sang tiếng Việt
-            const fieldLabels = {
-                tenTinh: 'Tỉnh',
-                maTinh: 'Mã tỉnh',
-                tenXa: 'Tên xã',
-                maXa: 'Mã xã',
-                danSo: 'Dân số',
-                dienTich: 'Diện tích',
-                ghiChu: 'Ghi chú'
-            };
+        function makePopupContent(properties) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'custom-popup';
 
             const title = document.createElement('div');
-            title.className = 'ward-popup-title';
-            title.textContent = properties.tenXa || 'Thông tin xã';
+            title.className = 'popup-title';
+            title.textContent = properties.ten_xa || 'Thông tin đơn vị hành chính';
+            wrapper.appendChild(title);
 
             const body = document.createElement('div');
-            body.className = 'ward-popup-body';
+            body.className = 'popup-body';
 
-            // Chỉ hiển thị các trường cần thiết
-            const fields = [
-                'tenTinh',
-                'maTinh',
-                'maXa',
-                'danSo',
-                'dienTich',
-                'ghiChu'
-            ];
-
-            fields.forEach((key) => {
-                const value = properties[key];
-
-                if (value == null || value === '') return;
+            Object.entries(properties || {}).forEach(([key, value]) => {
+                if (value === null || value === undefined || value === '') return;
+                if (['id', 'geom', 'geometry', 'objectid'].includes(key.toLowerCase())) return;
 
                 const row = document.createElement('div');
-                row.className = 'ward-popup-row';
+                row.className = 'attribute';
 
-                const label = document.createElement('div');
-                label.className = 'ward-popup-key';
-                label.textContent = fieldLabels[key] || key;
+                const name = document.createElement('div');
+                name.className = 'attribute-key';
+                name.textContent = fieldLabels[key] || key;
 
-                const content = document.createElement('div');
-                content.className = 'ward-popup-value';
+                const val = document.createElement('div');
+                val.className = 'attribute-value';
+                val.textContent = formatValue(key, value);
 
-                // Định dạng dân số và diện tích
-                if (key === 'danSo') {
-                    content.textContent =
-                        Number(value).toLocaleString('vi-VN') + ' người';
-                } else if (key === 'dienTich') {
-                    content.textContent =
-                        Number(value).toLocaleString('vi-VN');
-                } else {
-                    content.textContent = String(value);
-                }
-
-                row.append(label, content);
+                row.append(name, val);
                 body.appendChild(row);
             });
 
-            const container = document.createElement('div');
-            container.className = 'ward-popup';
-            container.append(title, body);
+            wrapper.appendChild(body);
+            return wrapper;
+        }
 
-            new maplibregl.Popup({
-                closeButton: true,
-                closeOnClick: true,
-                maxWidth: '360px'
-            })
-                .setLngLat(e.lngLat)
-                .setDOMContent(container)
-                .addTo(map);
+        map.on('load', async () => {
+
+            try {
+                const response = await fetch(GEOJSON_URL);
+                if (!response.ok) {
+                    throw new Error(`Không tải được ${GEOJSON_URL} (HTTP ${response.status})`);
+                }
+                const geojson = await response.json();
+
+                // KIỂM TRA SỐ FEATURE VÀ MÃ XÃ TRÙNG
+                const features = geojson.features || [];
+                const countByXa = {};
+
+                features.forEach(feature => {
+                    const p = feature.properties || {};
+                    const key = p.ma_xa || p.ten_xa || 'KHONG_CO_MA';
+
+                    countByXa[key] = (countByXa[key] || 0) + 1;
+                });
+
+                console.log('Tổng số feature:', features.length);
+
+                console.table(
+                    Object.entries(countByXa)
+                        .filter(([key, count]) => count > 1)
+                        .map(([key, count]) => ({
+                            ma_xa_hoac_ten: key,
+                            so_feature: count
+                        }))
+                );
+
+                map.addSource(SOURCE_ID, {
+                    type: 'geojson',
+                    data: geojson,
+                    generateId: true
+                });
+
+                // Tạo bộ dữ liệu riêng cho label: mỗi mã xã chỉ giữ một feature,
+                // tránh lặp tên khi GeoJSON có nhiều feature cùng đại diện một xã.
+                const uniqueLabelFeatures = [];
+                const seenLabelKeys = new Set();
+                for (const feature of (geojson.features || [])) {
+                    const props = feature.properties || {};
+                    const name = String(props.ten_xa || '').trim();
+                    if (!name) continue;
+                    const code = String(props.ma_xa || '').trim();
+                    const key = code ? `ma_xa:${code}` : `ten_xa:${name.toLocaleLowerCase('vi')}`;
+                    if (seenLabelKeys.has(key)) continue;
+                    seenLabelKeys.add(key);
+                    uniqueLabelFeatures.push(feature);
+                }
+                map.addSource(LABEL_SOURCE_ID, {
+                    type: 'geojson',
+                    data: { type: 'FeatureCollection', features: uniqueLabelFeatures }
+                });
+
+                map.addLayer({
+                    id: FILL_LAYER,
+                    type: 'fill',
+                    source: SOURCE_ID,
+                    paint: {
+                        'fill-color': '#7bc8a4',
+                    }
+                });
+
+                map.addLayer({
+                    id: LINE_LAYER,
+                    type: 'line',
+                    source: SOURCE_ID,
+                    paint: {
+                        'line-color': '#198754',
+                        'line-width': 2
+                    }
+                });
+
+                map.addLayer({
+                    id: LABEL_LAYER,
+                    type: 'symbol',
+                    source: LABEL_SOURCE_ID,
+                    minzoom: 9,
+                    layout: {
+                        // Chỉ hiển thị tên xã để tránh nhãn dài/lặp phần loại đơn vị.
+                        'text-field': ['coalesce', ['get', 'ten_xa'], ''],
+                        'symbol-placement': 'point',
+                        'symbol-z-order': 'source',
+                        'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+                        'text-size': [
+                            'interpolate', ['linear'], ['zoom'],
+                            10, 10,
+                            13, 13,
+                            15, 16,
+                            20, 16
+                        ],
+                        'text-anchor': 'center',
+                        // Không cho nhãn chồng lên nhãn khác và không bỏ qua vị trí nhãn đã chiếm.
+                        'text-allow-overlap': false,
+                        'text-ignore-placement': false,
+                        'text-optional': true
+                    },
+                    paint: {
+                        'text-color': '#1f2937',
+                        'text-halo-color': '#ffffff',
+                        'text-halo-width': 1.6,
+                        'text-halo-blur': 0.4
+                    }
+                });
+
+
+                map.setPaintProperty(FILL_LAYER, 'fill-color', [
+                    'case',
+                    ['boolean', ['feature-state', 'hover'], false],
+                    '#fca5a5',
+                    '#7bc8a4'
+                ]);
+
+                map.setPaintProperty(LINE_LAYER, 'line-color', [
+                    'case',
+                    ['boolean', ['feature-state', 'hover'], false],
+                    '#dc2626',
+                    '#198754'
+                ]);
+
+                map.setPaintProperty(LINE_LAYER, 'line-width', [
+                    'case',
+                    ['boolean', ['feature-state', 'hover'], false],
+                    4,
+                    2
+                ]);
+
+                let hoveredFeatureId = null;
+
+                map.on('mousemove', FILL_LAYER, (event) => {
+                    map.getCanvas().style.cursor = 'pointer';
+
+                    const feature = event.features && event.features[0];
+                    const nextId = feature && feature.id !== undefined
+                        ? feature.id
+                        : null;
+
+                    if (hoveredFeatureId !== null &&
+                        hoveredFeatureId !== nextId) {
+                        map.setFeatureState(
+                            { source: SOURCE_ID, id: hoveredFeatureId },
+                            { hover: false }
+                        );
+                    }
+
+                    hoveredFeatureId = nextId;
+
+                    if (hoveredFeatureId !== null) {
+                        map.setFeatureState(
+                            { source: SOURCE_ID, id: hoveredFeatureId },
+                            { hover: true }
+                        );
+                    }
+                });
+
+                map.on('mouseleave', FILL_LAYER, () => {
+                    map.getCanvas().style.cursor = '';
+
+                    if (hoveredFeatureId !== null) {
+                        map.setFeatureState(
+                            { source: SOURCE_ID, id: hoveredFeatureId },
+                            { hover: false }
+                        );
+                    }
+
+                    hoveredFeatureId = null;
+                });
+
+                // Click vào xã để mở popup thông tin thuộc tính.
+                map.on('click', (event) => {
+                    const features = map.queryRenderedFeatures(event.point, {
+                        layers: [FILL_LAYER, LINE_LAYER, LABEL_LAYER]
+                    });
+
+                    if (!features.length) return;
+
+                    // Ưu tiên feature thuộc lớp polygon; nhãn/đường biên cũng có thể được click.
+                    const feature = features.find(item => item.layer.id === FILL_LAYER)
+                        || features.find(item => item.layer.id === LINE_LAYER)
+                        || features[0];
+
+                    if (!feature.properties) return;
+
+                    new maplibregl.Popup({
+                        closeButton: true,
+                        closeOnClick: true,
+                        maxWidth: '380px',
+                        offset: 8
+                    })
+                        .setLngLat(event.lngLat)
+                        .setDOMContent(makePopupContent(feature.properties))
+                        .addTo(map);
+                });
+
+                // Zoom tới toàn bộ phạm vi dữ liệu GeoJSON.
+                const bounds = new maplibregl.LngLatBounds();
+                function addCoordinates(coords) {
+                    if (!Array.isArray(coords)) return;
+                    if (typeof coords[0] === 'number' && typeof coords[1] === 'number') {
+                        bounds.extend([coords[0], coords[1]]);
+                        return;
+                    }
+                    coords.forEach(addCoordinates);
+                }
+                (geojson.features || []).forEach(feature => {
+                    if (feature.geometry && feature.geometry.coordinates) {
+                        addCoordinates(feature.geometry.coordinates);
+                    }
+                });
+                if (!bounds.isEmpty()) {
+                    map.fitBounds(bounds, { padding: 35, maxZoom: 13, duration: 0 });
+                }
+            } catch (error) {
+                console.error('Lỗi tải hoặc hiển thị GeoJSON:', error);
+                alert('Không thể tải PhuongXaHaTinh.geojson. Hãy kiểm tra tên file, đường dẫn và chạy trang qua HTTP/HTTPS (không mở trực tiếp bằng file://).');
+            }
         });
-
-        // Đổi con trỏ khi rê chuột lên xã thuộc Hà Tĩnh
-        map.on('mousemove', (e) => {
-            const features = map.queryRenderedFeatures(e.point);
-
-            const hasHaTinh = features.some((f) =>
-                ['fill', 'fill-extrusion'].includes(f.layer.type) &&
-                f.properties &&
-                f.properties.tenTinh === 'Tỉnh Hà Tĩnh'
-            );
-
-            map.getCanvas().style.cursor = hasHaTinh ? 'pointer' : '';
-        });
-
     </script>
 </body>
 
