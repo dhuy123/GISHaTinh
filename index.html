@@ -18,7 +18,16 @@
 
         #map {
             width: 100%;
-            height: 100vh;
+            height: 50vh;
+            /* Máy tính: chiếm 1/2 chiều cao màn hình */
+        }
+
+        /* Mobile */
+        @media screen and (max-width: 768px) {
+            #map {
+                height: 25vh;
+                /* Mobile: chiếm 1/4 chiều cao màn hình */
+            }
         }
 
         .maplibregl-ctrl-group button {
