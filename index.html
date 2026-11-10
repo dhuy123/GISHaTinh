@@ -124,6 +124,26 @@
         .maplibregl-popup-tip {
             border-top-color: #fff;
         }
+
+        .legend-panel {
+            position: absolute;
+            top: 0;
+            right: 45px;
+            width: 380px;
+            max-height: 80vh;
+            overflow: auto;
+            background: white;
+            padding: 8px;
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+        }
+
+        .legend-panel img {
+            display: block;
+            width: 100%;
+            height: auto;
+            image-rendering: auto;
+        }
     </style>
 </head>
 
@@ -142,10 +162,13 @@
         // const HOVER_LAYER = 'phuong-xa-hover';
         const LABEL_LAYER = 'phuong-xa-labels';
 
+        // Nền địa hình Hillshade
+        const TERRAIN_SOURCE_ID = 'terrain-vietnam-source';
+        const TERRAIN_LAYER_ID = 'terrain-vietnam-layer';
+
         const map = new maplibregl.Map({
             container: 'map',
-            // style: 'https://gishn.hanoi.dcs.vn:360/style.json',
-             style: "https://lifegis-api.lifetex.vn/style.json",
+            style: 'https://lifegis-api.lifetex.vn/style.json',
             center: [105.9, 18.3],
             zoom: 8,
             attributionControl: false
@@ -163,8 +186,116 @@
 
         map.addControl(
             new maplibregl.NavigationControl({ visualizePitch: true }),
-            'top-left'
+            'top-right'
         );
+
+
+        map.on('load', () => {
+            // Lưu các layer của bản đồ LifeGIS
+            const defaultLayers = map.getStyle().layers.map(layer => layer.id);
+
+            // Thêm Hillshade
+            map.addSource(TERRAIN_SOURCE_ID, {
+                type: 'raster',
+                tiles: [
+                    'https://lifegis-api.lifetex.vn/data/terrain_vietnam/{z}/{x}/{y}.png'
+                ],
+                tileSize: 256
+            });
+
+            map.addLayer({
+                id: TERRAIN_LAYER_ID,
+                type: 'raster',
+                source: TERRAIN_SOURCE_ID,
+                layout: { visibility: 'none' },
+                paint: { 'raster-opacity': 0.65 }
+            }, map.getStyle().layers[0].id);
+
+            // Control chọn lớp bản đồ
+            class LayersControl {
+                onAdd(map) {
+                    const div = document.createElement('div');
+                    div.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+                    div.style.cssText = `
+                background: white;
+                padding: 8px 12px;
+                font-size: 12px;
+            `;
+
+                    div.innerHTML = `
+                <strong> ▧ Lớp bản đồ</strong> <br>
+                <label>
+                    <input type="checkbox" id="default-map" checked>
+                    LifeGIS
+                </label><br>
+
+                <label>
+                    <input type="checkbox" id="terrain-map">
+                    Địa hình
+                </label>
+            `;
+
+                    // Bật/tắt LifeGIS
+                    div.querySelector('#default-map').onchange = e => {
+                        defaultLayers.forEach(id => {
+                            map.setLayoutProperty(
+                                id,
+                                'visibility',
+                                e.target.checked ? 'visible' : 'none'
+                            );
+                        });
+                    };
+
+                    // Bật/tắt Hillshade
+                    div.querySelector('#terrain-map').onchange = e => {
+                        map.setLayoutProperty(
+                            TERRAIN_LAYER_ID,
+                            'visibility',
+                            e.target.checked ? 'visible' : 'none'
+                        );
+                    };
+
+                    return div;
+                }
+
+                onRemove() { }
+            }
+
+            map.addControl(new LayersControl(), 'top-right');
+        });
+
+
+        class LegendControl {
+            onAdd(map) {
+                const div = document.createElement('div');
+                div.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+
+                div.innerHTML = `
+            <button type="button" title="Chú giải bản đồ">
+               ⓘ
+            </button>
+
+            <div class="legend-panel" style="display:none;">
+                <img src="/Legend/ChuGiai.jpg" alt="Chú giải bản đồ">
+            </div>
+        `;
+
+                const button = div.querySelector('button');
+                const panel = div.querySelector('.legend-panel');
+
+                button.onclick = () => {
+                    panel.style.display =
+                        panel.style.display === 'none' ? 'block' : 'none';
+                };
+
+                return div;
+            }
+
+            onRemove() { }
+        }
+
+        map.addControl(new LegendControl(), 'top-right');
+
 
         map.addControl(
             new maplibregl.ScaleControl({
@@ -309,7 +440,8 @@
                     type: 'fill',
                     source: SOURCE_ID,
                     paint: {
-                        'fill-color': '#7bc8a4',
+                        'fill-color': '#808000',
+                        'fill-opacity': 0.2
                     }
                 });
 
@@ -319,7 +451,7 @@
                     source: SOURCE_ID,
                     paint: {
                         'line-color': '#198754',
-                        'line-width': 2
+                        'line-width': 2 
                     }
                 });
 
@@ -327,7 +459,8 @@
                     id: LABEL_LAYER,
                     type: 'symbol',
                     source: LABEL_SOURCE_ID,
-                    minzoom: 7,
+                    minzoom: 0,
+                    maxzoom: 10.1,
                     layout: {
                         // Chỉ hiển thị tên xã để tránh nhãn dài/lặp phần loại đơn vị.
                         'text-field': ['coalesce', ['get', 'ten_xa'], ''],
@@ -360,7 +493,7 @@
                     'case',
                     ['boolean', ['feature-state', 'hover'], false],
                     '#fca5a5',
-                    '#7bc8a4'
+                    '#808000'
                 ]);
 
                 map.setPaintProperty(LINE_LAYER, 'line-color', [
