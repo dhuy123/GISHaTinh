@@ -140,8 +140,10 @@
 
         .legend-panel img {
             display: block;
-            width: 100%;
+            width: auto;
             height: auto;
+            max-width: 100%;
+            object-fit: contain;
             image-rendering: auto;
         }
     </style>
@@ -276,8 +278,9 @@
             </button>
 
             <div class="legend-panel" style="display:none;">
-                <img src="/GIS_HaTinh/Legend/ChuGiai.jpg" alt="Chú giải bản đồ">
-            </div>
+    <img src="https://dhuy123.github.io/GISHaTinh/Legend/ChuGiai.jpg"
+         alt="Chú giải bản đồ">
+</div>
         `;
 
                 const button = div.querySelector('button');
@@ -451,7 +454,7 @@
                     source: SOURCE_ID,
                     paint: {
                         'line-color': '#198754',
-                        'line-width': 2 
+                        'line-width': 2
                     }
                 });
 
